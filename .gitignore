@@ -1,0 +1,8 @@
+*.[oa]
+*.*
+!*.py
+!*.html
+!*.js
+!*.json
+!*.gitignore
+f
