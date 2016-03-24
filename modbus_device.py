@@ -5,7 +5,7 @@ try:
 except ImportError:
     comports = None
 DEFAULT_PORT = 1
-DEFAULT_BAUDRATE = 38400
+DEFAULT_BAUDRATE = 115200
 DEFAULT_RTS = None
 DEFAULT_DTR = None
 
@@ -63,17 +63,28 @@ def main():
                      )
     parser.add_option_group(group)
 
-    group = optparse.OptionGroup(parser, "MODBUS settings")
+    group_modbus = optparse.OptionGroup(parser, "MODBUS settings")
 
-    group.add_option("-m",
-                     dest="modbus_address",
-                     action="store",
-                     help="modbus address ",
-                     type='int',
-                     default=4
-                     )
+    group_modbus.add_option("-m",
+                            dest="modbus_address",
+                            action="store",
+                            help="modbus address ",
+                            type='int',
+                            default=3
+                            )
 
-    parser.add_option_group(group)
+    parser.add_option_group(group_modbus)
+    group_ip = optparse.OptionGroup(parser, "IP settings")
+
+    group_ip.add_option("--iport",
+                        dest="ip_port",
+                        action="store",
+                        help="ip port",
+                        type='int',
+                        default=502
+                        )
+
+    parser.add_option_group(group_ip)
 
     (options, args) = parser.parse_args()
 
@@ -86,14 +97,18 @@ def main():
 
 #    if options.menu_char == options.exit_char:
  #       parser.error('--exit-char can not be the same as --menu-char')
+    print(options)
     import com_transfer
     serial_port = com_transfer.com_init(options.port, options.baudrate, options.parity, options.rtscts, options.xonxoff)
     print(serial_port)
+    import tcp_ip_transfer
+    ip_socket = tcp_ip_transfer.tcp_ip_init(options.ip_port)
     import modbus_parser
     mdb_device = modbus_parser.ModbusHandler(options.modbus_address)
     if com_transfer.serial_is_open:
-
         com_transfer.com_start_list(serial_port, mdb_device)
+    if ip_socket:
+        tcp_ip_transfer.tcp_ip_start_list(ip_socket, mdb_device)
     packet_num = 0
     while 1:
         q = msvcrt.getch()
