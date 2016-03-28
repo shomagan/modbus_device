@@ -1,17 +1,50 @@
-import msvcrt
+try:
+    import msvcrt
+    PLATFORM = "win"
+except ImportError:
+    PLATFORM = "unix"
+    import tty
+    import termios
+    from select import select
+
 import sys
 try:
     from serial.tools.list_ports import comports
 except ImportError:
     comports = None
+import optparse
+import com_transfer
+import tcp_ip_transfer
+import modbus_parser
 DEFAULT_PORT = 1
 DEFAULT_BAUDRATE = 115200
 DEFAULT_RTS = None
 DEFAULT_DTR = None
 
 
+def get_ch():
+    if PLATFORM == "win":
+        ch = msvcrt.getch()
+        return ch
+    elif PLATFORM == "unix":
+        fd = sys.stdin.fileno()
+        old_setting = termios.tcgetattr(fd)
+        try:
+            tty.setraw(sys.stdin.fileno())
+            i, o, e = select([sys.stdin.fileno()], [], [], 5)
+            if i:
+                ch = sys.stdin.read(1)
+            else:
+                ch = ""
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_setting)
+        return ch
+    else:
+        return ""
+
+
 def main():
-    import optparse
+
     parser = optparse.OptionParser(
             usage="%prog [options] [port [baudrate]]",
             description="modbus_device- A simple program for the Modbus device emulator."
@@ -98,12 +131,12 @@ def main():
 #    if options.menu_char == options.exit_char:
  #       parser.error('--exit-char can not be the same as --menu-char')
     print(options)
-    import com_transfer
+
     serial_port = com_transfer.com_init(options.port, options.baudrate, options.parity, options.rtscts, options.xonxoff)
     print(serial_port)
-    import tcp_ip_transfer
+
     ip_socket = tcp_ip_transfer.tcp_ip_init(options.ip_port)
-    import modbus_parser
+
     mdb_device = modbus_parser.ModbusHandler(options.modbus_address)
     if com_transfer.serial_is_open:
         com_transfer.com_start_list(serial_port, mdb_device)
@@ -111,7 +144,7 @@ def main():
         tcp_ip_transfer.tcp_ip_start_list(ip_socket, mdb_device)
     packet_num = 0
     while 1:
-        q = msvcrt.getch()
+        q = get_ch()
         print(ord(q))
         if ord(q) == 113:   #q
             com_transfer.close(serial_port)
