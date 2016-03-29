@@ -1,6 +1,5 @@
 #!/c/Python33/ python
 import sys
-import serial
 import time
 import _thread as thread
 MAX_RECEIVE_BYTE = 255
@@ -12,6 +11,12 @@ receive_buff = [0 for x in range(MAX_RECEIVE_BYTE)]
 
 def com_init(port, baudrate, parity, rtscts, xonxoff):
     global serial_is_open
+    try:
+        import serial
+    except ImportError:
+        serial_is_open = 0
+        print("could not import\n")
+        return serial_is_open
     try:
         try:
             serial_port = serial.serial_for_url(port, baudrate, parity=parity,

@@ -16,7 +16,7 @@ import optparse
 import com_transfer
 import tcp_ip_transfer
 import modbus_parser
-DEFAULT_PORT = 1
+DEFAULT_PORT = "COM2"
 DEFAULT_BAUDRATE = 115200
 DEFAULT_RTS = None
 DEFAULT_DTR = None
@@ -131,9 +131,9 @@ def main():
 #    if options.menu_char == options.exit_char:
  #       parser.error('--exit-char can not be the same as --menu-char')
     print(options)
-
-    serial_port = com_transfer.com_init(options.port, options.baudrate, options.parity, options.rtscts, options.xonxoff)
-    print(serial_port)
+    print(PLATFORM)
+    serial_port = com_transfer.com_init(options.port, options.baudrate,
+                                        options.parity, options.rtscts, options.xonxoff)
 
     ip_socket = tcp_ip_transfer.tcp_ip_init(options.ip_port)
 
