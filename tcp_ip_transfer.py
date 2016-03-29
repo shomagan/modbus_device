@@ -9,6 +9,7 @@ receive_timer = 0
 receive_byte_num = 0
 
 
+
 def get_network_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(('gmail.com', 80))
@@ -45,10 +46,10 @@ def tcp_ip_list(socket_s, device):
         if data:
             receive_byte_num = len(data)
             packet_num += 1
-            data_s = [data[i] for i in range(0, len(data))]
-            if device.receive_rtu_packet(data_s, len(data)):
-                data_s = [device.answer_packet[i] for i in range(device.answer_packet_size)]
-                conn.send(data_s)
+
+            if device.receive_tcp_packet(data, len(data)):
+                receive_buff_temp=[device.answer_packet[i] for i in range(device.answer_packet_size)]
+                conn.send(bytearray(receive_buff_temp))
                 conn.close()
 
 def close(socket):
