@@ -36,6 +36,7 @@ class ModbusHandler(object):
                 self.packet_receive_num += 1
                 if buff[1] == 3:
                     size = self.make_answer_3(buff[6:], num_byte)
+                    self.answer_packet_size+=4
                     for i in range(0, 6):
                         self.answer_packet.insert(i,buff[i])
                     return size

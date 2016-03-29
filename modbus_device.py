@@ -149,6 +149,7 @@ def main():
           print(ord(q))
           if ord(q) == 113:   #q
               com_transfer.close(serial_port)
+              tcp_ip_transfer.close(ip_socket)
               sys.exit(1)
           if mdb_device.packet_receive_num != packet_num:
               print(mdb_device.packet_receive_num)

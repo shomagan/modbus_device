@@ -38,19 +38,17 @@ def tcp_ip_list(socket_s, device):
     global conn
     receive_byte_num = 0
     packet_num = 0
-    print("start_tcp_ip_listing")
     receive_timer = time.time()
+    conn, addr = socket_s.accept()
+    print("start_tcp_ip_listing")
     while 1:
-        conn, addr = socket_s.accept()
         data = conn.recv(BUFFER_SIZE)
         if data:
             receive_byte_num = len(data)
             packet_num += 1
-
             if device.receive_tcp_packet(data, len(data)):
                 receive_buff_temp=[device.answer_packet[i] for i in range(device.answer_packet_size)]
                 conn.send(bytearray(receive_buff_temp))
-                conn.close()
 
 def close(socket):
     if tcp_ip_is_open:
