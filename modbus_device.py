@@ -145,12 +145,13 @@ def main():
     packet_num = 0
     while 1:
         q = get_ch()
-        print(ord(q))
-        if ord(q) == 113:   #q
-            com_transfer.close(serial_port)
-            sys.exit(1)
-        if mdb_device.packet_receive_num != packet_num:
-            print(mdb_device.packet_receive_num)
+        if q:
+          print(ord(q))
+          if ord(q) == 113:   #q
+              com_transfer.close(serial_port)
+              sys.exit(1)
+          if mdb_device.packet_receive_num != packet_num:
+              print(mdb_device.packet_receive_num)
 
 
 
