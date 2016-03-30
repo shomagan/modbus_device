@@ -42,17 +42,23 @@ def tcp_ip_list(socket_s, device):
     conn, addr = socket_s.accept()
     print("start_tcp_ip_listing")
     while 1:
-        data = conn.recv(BUFFER_SIZE)
-        if data:
-            receive_byte_num = len(data)
-            packet_num += 1
-            if device.receive_tcp_packet(data, len(data)):
-                receive_buff_temp=[device.answer_packet[i] for i in range(device.answer_packet_size)]
-                conn.send(bytearray(receive_buff_temp))
-        if not data:
-            print("close tcp connection")
+        try:
+            data = conn.recv(BUFFER_SIZE)
+            if data:
+                receive_byte_num = len(data)
+                packet_num += 1
+                if device.receive_tcp_packet(data, len(data)):
+                    receive_buff_temp=[device.answer_packet[i] for i in range(device.answer_packet_size)]
+                    conn.send(bytearray(receive_buff_temp))
+            if not data:
+                print("close tcp connection")
+                conn.close()
+                conn, addr = socket_s.accept()
+        except socket.error:
+            print("close tcp connection by error")
             conn.close()
             conn, addr = socket_s.accept()
+
 def close(socket):
     if tcp_ip_is_open:
         conn.close()
