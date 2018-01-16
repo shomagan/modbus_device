@@ -56,7 +56,7 @@ def com_list(serial_port_list, device):
     print("start_com_listing")
     receive_timer = time.time()
     while 1:                 
-        if (time.time() > (receive_timer+0.03)) & (receive_byte_num!=0):
+        if (time.time() > (receive_timer+0.02)) & (receive_byte_num!=0):
 #            print([receive_buff[x] for x in range(receive_byte_num)])
             if device.receive_rtu_packet(receive_buff, receive_byte_num):
                 send_packet(serial_port_list, device.answer_packet, device.answer_packet_size)
@@ -64,6 +64,7 @@ def com_list(serial_port_list, device):
                 print('error_packet',receive_buff[0:receive_byte_num])
             receive_byte_num = 0
             packet_num += 1
+        serial_port_list.timeout = 0.03
         receive_char = serial_port_list.read(1)
         if receive_char:
             receive_timer = time.time()
