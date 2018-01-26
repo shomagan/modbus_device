@@ -69,7 +69,7 @@ def com_list(serial_port_list, device):
         if receive_char:
             receive_timer = time.time()
             if receive_byte_num >=MAX_RECEIVE_BYTE:
-                print('error max_packet_size')
+                print('error max_packet_size',receive_buff)
                 receive_byte_num =0
             receive_buff[receive_byte_num] = ord(receive_char)
             receive_byte_num += 1
@@ -78,7 +78,8 @@ def com_list(serial_port_list, device):
 def send_packet(port, buff, size):
     packet = buff[0:size]
     port.write(packet)
-    print(buff[0:size])
+    print('-<---<.>--->-',buff[0:size])
+    print(time.asctime())
 
 
 def close(serial_port):

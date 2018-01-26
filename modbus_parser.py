@@ -1,3 +1,4 @@
+import time 
 class ModbusHandler(object):
     def __init__(self, address):
         print("add modbus device with address", address)
@@ -13,11 +14,12 @@ class ModbusHandler(object):
     def receive_rtu_packet(self, buff, num_byte):
         if num_byte > 4:
             crc_in_packet = buff[num_byte - 2] + (buff[num_byte - 1] << 8)
-            print(buff[0:num_byte])
             if self.check_crc(buff, num_byte) == crc_in_packet:
                 if buff[0] == self.modbus_address:
                     self.packet_receive_num += 1
-                    if buff[1] == 3:
+                    print('->--->.<---<-',buff[0:num_byte])
+                    print(time.asctime(),'good packet number',self.packet_receive_num)
+                    if buff[1] == 3 or buff[1] == 4:
                         size = self.make_answer_3(buff, num_byte)
                         return size
                     else:
@@ -34,7 +36,7 @@ class ModbusHandler(object):
             print(buff[0:num_byte])
             if buff[6] == self.modbus_address:
                 self.packet_receive_num += 1
-                if buff[1] == 3:
+                if buff[1] == 3 | buff[1] == 4 :
                     size = self.make_answer_3(buff[6:], num_byte)
                     self.answer_packet_size+=4
                     for i in range(0, 6):
