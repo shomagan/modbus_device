@@ -77,8 +77,8 @@ def com_list(serial_port_list, device):
 
 def send_packet(port, buff, size):
     packet = buff[0:size]
-    port.write(packet)
     print('-<---<.>--->-',buff[0:size])
+    port.write(packet)
     print(time.asctime())
 
 
