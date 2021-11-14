@@ -11,14 +11,16 @@ receive_byte_num = 0
 
 
 def get_network_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(('gmail.com', 80))
-    return s.getsockname()[0]
+    print("Getting private IP")
+    names = socket.gethostname()
+    print("names " + names)
+    ip = socket.gethostbyname(socket.gethostname())
+    print("IP: " + ip)
+    return ip
 
 
 def tcp_ip_init(port):
     global tcp_ip_is_open
-
     self_ip = get_network_ip()
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((self_ip, port))
@@ -48,7 +50,7 @@ def tcp_ip_list(socket_s, device):
                 receive_byte_num = len(data)
                 packet_num += 1
                 if device.receive_tcp_packet(data, len(data)):
-                    receive_buff_temp=[device.answer_packet[i] for i in range(device.answer_packet_size)]
+                    receive_buff_temp = [device.answer_packet[i] for i in range(device.answer_packet_size)]
                     conn.send(bytearray(receive_buff_temp))
             if not data:
                 print("close tcp connection")
@@ -59,6 +61,6 @@ def tcp_ip_list(socket_s, device):
             conn.close()
             conn, addr = socket_s.accept()
 
+
 def close(socket):
-    if tcp_ip_is_open:
-        conn.close()
+    socket.close()
