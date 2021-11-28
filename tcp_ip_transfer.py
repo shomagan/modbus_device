@@ -3,6 +3,7 @@ import sys
 import time
 import socket
 import _thread as thread
+import logging
 BUFFER_SIZE = 1024
 tcp_ip_is_open = 0
 receive_timer = 0
@@ -51,6 +52,8 @@ def tcp_ip_list(socket_s, device):
                 packet_num += 1
                 if device.receive_tcp_packet(data, len(data)):
                     receive_buff_temp = [device.answer_packet[i] for i in range(device.answer_packet_size)]
+                    logging.info('send: {}'.format(receive_buff_temp))
+                    print(receive_buff_temp)
                     conn.send(bytearray(receive_buff_temp))
             if not data:
                 print("close tcp connection")

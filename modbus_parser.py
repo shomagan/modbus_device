@@ -1,5 +1,6 @@
 import time 
 import struct
+import logging
 ILLEGAL_FUNCTION = 0x01
 ILLEGAL_DATA_ADDRESS = 0x02
 ILLEGAL_DATA_VALUE = 0x03
@@ -13,6 +14,7 @@ GATEWAY_TARGET_DEVICE_FAILED_TO_RESPOND = 0x0B
 
 class ModbusHandler(object):
     def __init__(self, device_description):
+        logging.basicConfig(filename='packet.log', level=logging.DEBUG)
         print("add modbus device with address", device_description["address"])
         self.modbus_address = device_description["address"]
         self.packet_receive_num = 0
@@ -22,9 +24,12 @@ class ModbusHandler(object):
         self.spaces = []
         for i in range(device_description["spaces_num"]):
             space = {}
-            buffer = [i for i in range(device_description["spaces"][i]["registers_num"]*2)]
+            buffer = [i for i in range(device_description["spaces"][i]["registers_num"])]
             space["buffer"] = buffer
             space.update(device_description["spaces"][i])
+            for j in range(len(device_description["spaces"][i]["init_buffer"])):
+                space["buffer"][j] = device_description["spaces"][i]["init_buffer"][j]
+            print("space inited {}".format(space["buffer"]))
             self.spaces.append(space)
 
     def __del__(self):
@@ -33,23 +38,27 @@ class ModbusHandler(object):
     def receive_rtu_packet(self, buff, num_byte, crc_check=1):
         if num_byte > 4:
             print (num_byte)
-            crc_in_packet = buff[num_byte - 2] + (buff[num_byte - 1] << 8)
-            if crc_check == 0 or self.calc_crc(buff, num_byte) == crc_in_packet:
+            if crc_check == 0 or \
+               self.calc_crc(buff, num_byte) == (buff[num_byte - 2] + (buff[num_byte - 1] << 8)):
                 if buff[0] == self.modbus_address:
                     self.packet_receive_num += 1
                     print(time.asctime(),'good packet number',self.packet_receive_num)
                     size = 0
                     if buff[1] == 3:
+                        logging.info('recv - modbus funct 3: {}'.format([int(buff[i]) for i in range(len(buff))]))
                         size = self.modbus_func_3(buff, num_byte)
                         return size
                     if buff[1] == 4:
+                        logging.info('recv - modbus funct 4: {}'.format([int(buff[i]) for i in range(len(buff))]))
                         size = self.modbus_func_4(buff, num_byte)
                         return size
                     elif buff[1] == 6:
-                        size = self.handle_read_6(buff, num_byte)
+                        logging.info('recv - modbus funct 6: {}'.format([int(buff[i]) for i in range(len(buff))]))
+                        size = self.modbus_func_6(buff, num_byte)
                         return size
                     elif buff[1] == 16:
-                        size = self.handle_read_16(buff, num_byte)
+                        logging.info('recv - modbus funct 16: {}'.format([int(buff[i]) for i in range(len(buff))]))
+                        size = self.modbus_func_16(buff, num_byte)
                         return size
 
                     else:
@@ -62,7 +71,7 @@ class ModbusHandler(object):
     def reg_address_in_space(self, reg_address, regs_num):
         j = 0
         for i in self.spaces:
-            if (reg_address >= i["start_address"]) and ((reg_address + regs_num) < (i["start_address"]+i["registers_num"])):
+            if (reg_address >= i["start_address"]) and ((reg_address + regs_num) <= (i["start_address"]+i["registers_num"])):
                 return j, reg_address - i["start_address"]
             j += 1
         return -1, -1
@@ -106,7 +115,9 @@ class ModbusHandler(object):
         start_address = (packet[2] << 8) + (packet[3])
         num_regs = (packet[4] << 8) + (packet[5])
         space_num, position = self.reg_address_in_space(start_address, num_regs)
+        print(self.spaces[space_num]["buffer"])
         if (num_regs < 1) or (num_regs > 125) or (space_num<0):
+            logging.error("f16 illegal space for address - {} size - {}".format(start_address, num_regs))
             self.size_answer_packet = 5
             self.answer_packet[0] = packet[0]
             self.answer_packet[1] = packet[1]|0x80
@@ -121,7 +132,9 @@ class ModbusHandler(object):
             self.answer_packet[2] = num_regs*2
             for i in range(num_regs):
                 self.answer_packet[i*2 + 3] = (self.spaces[space_num]["buffer"][i + position] >> 8) & 0xff
-                self.answer_packet[i*2 + 4] = (self.spaces[space_num]["buffer"][i + position] >> 8)
+                self.answer_packet[i*2 + 4] = (self.spaces[space_num]["buffer"][i + position]) & 0xff
+            print(self.answer_packet[4:num_regs*2])
+            print(self.spaces[space_num]["buffer"])
             crc = self.calc_crc(self.answer_packet, num_regs*2+5)
             self.answer_packet[num_regs*2+3] = crc & 0xff
             self.answer_packet[num_regs*2+4] = (crc >> 8) & 0xff
@@ -135,6 +148,7 @@ class ModbusHandler(object):
         num_regs = (packet[4] << 8) + (packet[5])
         space_num, position = self.reg_address_in_space(start_address, num_regs)
         if (num_regs < 1) or (num_regs > 125) or (space_num<0):
+            logging.error("f16 illegal space for address - {} size - {}".format(start_address, num_regs))
             self.size_answer_packet = 5
             self.answer_packet[0] = packet[0]
             self.answer_packet[1] = packet[1]|0x80
@@ -149,7 +163,7 @@ class ModbusHandler(object):
             self.answer_packet[2] = num_regs*2
             for i in range(num_regs):
                 self.answer_packet[i*2 + 3] = (self.spaces[space_num]["buffer"][i + position] >> 8) & 0xff
-                self.answer_packet[i*2 + 4] = (self.spaces[space_num]["buffer"][i + position] >> 8)
+                self.answer_packet[i*2 + 4] = (self.spaces[space_num]["buffer"][i + position]) & 0xff
             crc = self.calc_crc(self.answer_packet, num_regs*2+5)
             self.answer_packet[num_regs*2+3] = crc & 0xff
             self.answer_packet[num_regs*2+4] = (crc >> 8) & 0xff
@@ -162,6 +176,7 @@ class ModbusHandler(object):
         start_address = (packet[2] << 8) + (packet[3])
         space_num, position = self.reg_address_in_space(start_address, 1)
         if space_num < 0:
+            logging.error("f6 illegal space for address - {}".format(start_address))
             self.size_answer_packet = 5
             self.answer_packet[0] = packet[0]
             self.answer_packet[1] = packet[1]|0x80
@@ -191,6 +206,7 @@ class ModbusHandler(object):
         num_regs = (packet[4] << 8) + (packet[5])
         space_num, position = self.reg_address_in_space(start_address, num_regs)
         if (num_regs < 1) or (num_regs > 125) or (space_num < 0):
+            logging.error("f16 illegal space for address - {} size - {}".format(start_address, num_regs))
             self.size_answer_packet = 5
             self.answer_packet[0] = packet[0]
             self.answer_packet[1] = packet[1]|0x80
