@@ -1,4 +1,5 @@
-{ "address" :3, "tcp_port" :502, "udp_port" :502, 
+{ "address" :3, "tcp_port" :502, "udp_port" :502,
+    "modbus_tcp" :1, "modbus_rtu":0, 
     "spaces":[{ "address_space_name" :"system_time_msec",
       "modbus_function" :"holding",
       "registers_num" :1,
