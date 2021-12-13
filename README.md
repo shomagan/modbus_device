@@ -1,2 +1,11 @@
-# modbus_device
-make response for modbusRTu and ModbusTCp
+ModbusTcp
+---------
+Simple modbus tcp device
+
+Settings
+--------
+modbus_device_description.json - description file
+
+Use
+---
+'python modbus_device.py'
